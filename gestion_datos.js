@@ -12,7 +12,16 @@ window.addEventListener('DOMContentLoaded', () => {
     const storedNotas = localStorage.getItem("notas");
     if (storedNotas) {
         notas = JSON.parse(storedNotas);
-        notas.forEach(nota => renderNota(nota));
+        notas.forEach(valor => {
+            const removeButton = document.createElement('button'); 
+            const listObject = document.createElement('li');
+          
+            removeButton.classList.add('remove'); 
+            removeButton.textContent = 'Eliminar';
+            listObject.textContent = valor;
+            unorderedList.appendChild(listObject);
+            listObject.appendChild(removeButton); 
+        });
         console.log(`Se cargaron ${notas.length} notas desde Local Storage`);
     }
 });
