@@ -42,7 +42,7 @@ listObject.appendChild(removeButton)
 let valor = input.value ;
 
 input.value = '';
-console.log(`se acaba de agregar la nota ${input.value}`);
+console.log(`se acaba de agregar la nota ${valor}`);
 // LOCAL STORAGE GUARDAMOS EN LA VARIABLE Y LO PASAMOS
 notas.push(valor)
 localStorage.setItem("notas", JSON.stringify(notas));
