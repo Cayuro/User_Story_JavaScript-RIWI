@@ -10,46 +10,68 @@ console.log(input,btnAdd, unorderedList);
 let notas = [];
 
 //  RENDERIZADOR DE NOTAS
-function render(valor){
+function render(nota){
     const listObject = document.createElement('li');
     const removeButton = document.createElement('button');
-    
+
     removeButton.setAttribute('class','remove')
     removeButton.textContent = 'Eliminar';
 
-    listObject.textContent = valor;
-    
+    listObject.textContent = nota.nota || nota;
+    if (nota.id) {
+        listObject.setAttribute('data-id', nota.id);
+    }
+
     unorderedList.appendChild(listObject);
     listObject.appendChild(removeButton)
 }
 
-// Al cargar la página, recuperar notas de Local Storage
-window.addEventListener('DOMContentLoaded', () => {
-    const storedNotas = localStorage.getItem("notas");
-    if (storedNotas) {
-        notas = JSON.parse(storedNotas);
+// Al cargar la página, recuperar notas de la API
+window.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const response = await fetch(API_URL);
+        const data = await response.json();
+        notas = data;
+        limpiarDom();
         notas.forEach(render);
-        console.log(`Se cargaron ${notas.length} notas desde Local Storage`);
+        localStorage.setItem("notas", JSON.stringify(notas));
+        console.log(`Se cargaron ${notas.length} notas desde la API`);
+    } catch (error) {
+        console.error('Error GET on load:', error);
+        // Fallback to localStorage
+        const storedNotas = localStorage.getItem("notas");
+        if (storedNotas) {
+            notas = JSON.parse(storedNotas);
+            notas.forEach(render);
+            console.log(`Se cargaron ${notas.length} notas desde Local Storage (fallback)`);
+        }
     }
 });
 
-btnAdd.addEventListener('click', ()=>{
+btnAdd.addEventListener('click', async ()=>{
     let valor = input.value ;
     if (isNaN(valor) || valor > 10 || valor < 0 || valor.trim() == ''){
         input.value = ''
         return alert('Please insert a valid note')
     }
-    render(valor)
 
     console.log(`se acaba de agregar la nota: ${valor}`);
-// LOCAL STORAGE GUARDAMOS EN LA VARIABLE Y LO PASAMOS
-    notas.push(valor)
-    localStorage.setItem("notas", JSON.stringify(notas));
-    
-// ENVIANDO NOTAS AL API 
-    enviarNotaAPI(valor)
+// ENVIANDO NOTAS AL API
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nota: valor })
+        });
+        const data = await response.json();
+        console.log('POST API:', data);
+        notas.push(data); // Add the response to local notas
+        render(data); // Render the new note
+        localStorage.setItem("notas", JSON.stringify(notas));
+    } catch (error) {
+        console.error('Error POST:', error);
+    }
     input.value = '';
-    
 })
 
 
@@ -77,13 +99,20 @@ unorderedList.addEventListener('click', (e)=>{
  UTILIZANDO API PUBLICA
  -------------------------- */
 
-const API_URL = 'https://jsonplaceholder.typicode.com/posts'
+const API_URL = 'http://localhost:3000/notas'
 
+// LIMPIAR DOM 
+function limpiarDom(){
+    unorderedList.innerHTML = ``
+}
 // GET
 async function obtenerNotasAPI() {
   try {
     const response = await fetch(API_URL)
     const data = await response.json()
+
+    limpiarDom()
+    notas.forEach(render)
     console.log('GET API:', data.slice(0, 5))
   } catch (error) {
     console.error('Error GET:', error)
